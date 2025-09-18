@@ -1,5 +1,5 @@
-def main():
-    pass
+from ui.app import App
 
 if __name__ == "__main__":
-    main()
+    app = App()
+    app.run()
