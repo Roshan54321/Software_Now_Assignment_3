@@ -3,3 +3,7 @@ from .label import Label
 from .combobox import Combobox
 from .textarea import TextArea
 from .radio import Radio
+from .entry import Entry
+from .frame import Frame
+from .label_frame import LabelFrame
+from .dropdown import DropdownMenu

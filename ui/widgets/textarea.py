@@ -1,8 +1,11 @@
 import tkinter as tk
 from ui.widgets.base_widget import BaseWidget
+from ui import theme
 
 class TextArea(BaseWidget):
     def __init__(self, parent, **kwargs):
+        kwargs.setdefault("bg", theme.TEXTBOX_COLOR)
+        kwargs.setdefault("fg", theme.TEXT_COLOR)
         super().__init__(parent)
         self.widget = tk.Text(parent, **kwargs)
 
