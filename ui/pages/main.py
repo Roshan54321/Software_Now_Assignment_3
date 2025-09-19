@@ -18,14 +18,17 @@ def middle_frame(self):
     middle_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
     # Left panel (input)
-    input_frame = ttk.LabelFrame(middle_frame, text="User Input Section")
+    input_frame = ttk.LabelFrame(middle_frame)
     input_frame.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+    Label(input_frame, text="User Input Section").pack(anchor="w", padx=5, pady=5)
+
+    mode_frame = ttk.Frame(input_frame)
+    mode_frame.pack(fill="x", padx=5, pady=5)
 
     self.input_mode = tk.StringVar(value="Text")
-    Radio(input_frame, "Text", self.input_mode, "Text").pack(side="left", padx=5)
-    Radio(input_frame, "Image", self.input_mode, "Image").pack(side="left", padx=5)
-
-    Button(input_frame, "Browse", command=self.browse_file).pack(side="left", padx=5)
+    Radio(mode_frame, "Text", self.input_mode, "Text").pack(side="left", padx=5)
+    Radio(mode_frame, "Image", self.input_mode, "Image").pack(side="left", padx=5)
+    Button(mode_frame, "Browse", command=self.browse_file).pack(side="left", padx=5)
 
     self.text_input = TextArea(input_frame, height=6, width=40)
     self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
@@ -37,16 +40,18 @@ def middle_frame(self):
     Button(btn_frame, "Clear", command=self.clear_input).pack(side="left", padx=5)
 
     # Right panel (output)
-    output_frame = ttk.LabelFrame(middle_frame, text="Model Output Section")
+    output_frame = ttk.LabelFrame(middle_frame)
     output_frame.pack(side="right", fill="both", expand=True, padx=5, pady=5)
+    Label(output_frame, text="Model Output Section").pack(anchor="w", padx=5, pady=5)
 
     Label(output_frame, text="Output Display:").pack(anchor="w", padx=5, pady=5)
     self.output_display = TextArea(output_frame, height=10, width=40)
     self.output_display.pack(fill="both", expand=True, padx=5, pady=5)
 
 def bottom_frame(self):
-    bottom_frame = ttk.LabelFrame(self, text="Model Information & Explanation")
-    bottom_frame.pack(fill="both", expand=True, padx=5, pady=5)
+    bottom_frame = ttk.LabelFrame(self)
+    bottom_frame.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+    Label(bottom_frame, text="Model Information & Explanation").pack(anchor="w", padx=5, pady=5)
 
     info = ttk.Frame(bottom_frame)
     info.pack(side="left", fill="both", expand=True, padx=5)
@@ -57,8 +62,6 @@ def bottom_frame(self):
     oop.pack(side="right", fill="both", expand=True, padx=5)
 
     Label(oop, text="OOP Concepts Explanation:\n• Where Multiple Inheritance are used\n• Why Encapsulation was applied\n• How Polymorphism and Method Overriding are shown\n• Where Multiple Decorators are applied").pack(anchor="w", padx=5, pady=5)
-
-    Label(self, text="Notes  Extra notes, instructions, or references.").pack(anchor="w", padx=5, pady=5)
 
 class MainPage(tk.Frame):
     def __init__(self, parent):
