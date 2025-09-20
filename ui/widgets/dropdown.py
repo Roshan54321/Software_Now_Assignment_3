@@ -9,11 +9,11 @@ class DropdownMenu(BaseWidget):
         self.var = tk.StringVar(value=default if default is not None else options[0])
         self.widget = tk.OptionMenu(parent, self.var, *options, command=command)
 
-        # Apply theming
         self.widget.config(
             bg=kwargs.get("bg", theme.BG_COLOR),
             fg=kwargs.get("fg", theme.TEXT_COLOR),
-            highlightthickness=0
+            activeforeground=kwargs.get("activeforeground", theme.TEXT_COLOR),
+            highlightthickness=0            
         )
 
     def get(self):

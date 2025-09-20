@@ -5,7 +5,10 @@ from ui import theme
 class TextArea(BaseWidget):
     def __init__(self, parent, **kwargs):
         kwargs.setdefault("bg", theme.TEXTBOX_COLOR)
-        kwargs.setdefault("fg", theme.TEXT_COLOR)
+        kwargs.setdefault("fg", theme.NEUTRAL_COLOR)
+        kwargs.setdefault("highlightthickness", 1)  
+        kwargs.setdefault("highlightcolor", theme.TEXTBOX_COLOR)
+        kwargs.setdefault("highlightbackground", theme.NEUTRAL_COLOR)
         super().__init__(parent)
         self.widget = tk.Text(parent, **kwargs)
 
