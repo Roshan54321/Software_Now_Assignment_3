@@ -4,15 +4,23 @@ from .base_model import BaseModel
 from .mixins import TimerMixin
 
 class TextGenModel(BaseModel, TimerMixin):
-    @TimerMixin.time_execution
     def __init__(self):
         super().__init__(
             name="GPT2 Model",
             input_type="text",
             output_type="text",
             category="Text-to-Text",
-            description="Generates text based on input prompts."
+            description="Generates text based on input prompts.",
+            oop_concepts = [
+                "Encapsulation – wraps tokenization, text generation, and decoding in one method",
+                "Polymorphism – shares generate_response API with BLIP model, but works for text",
+                "Inheritance – consistent base structure for easy GUI and model integration",
+                "Decorators – uses @property and custom decorators for clean design and structure"
+            ]
         )
+
+    @TimerMixin.time_execution
+    def load_model(self):
         self.tokenizer = AutoTokenizer.from_pretrained("openai-community/gpt2")
         self.model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
         if torch.cuda.is_available():
@@ -22,6 +30,7 @@ class TextGenModel(BaseModel, TimerMixin):
         else:
             self.device = "cpu"
         self.model.to(self.device)
+        self._is_loaded = True
 
     @TimerMixin.time_execution
     def generate_response(self, prompt, max_tokens=50):

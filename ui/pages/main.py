@@ -32,8 +32,14 @@ class MainPage(tk.Frame):
             self.status.config(text="Please enter a name.")
 
     def load_model(self):
-        # Show the user we're doing something)
-        self.output_display.set("Model Loaded...")
+        # call load_model on the selected model instance
+        self.set_output("Loading model...", "text")
+        self.update_idletasks()
+        model_name = self.current_model
+        model_instance = self.instantiated_models[model_name]
+        model_instance.load_model()
+        self.set_output(f"{model_name} Model has loaded successfully. You can now run the model.", "text")
+
 
     def clear_input(self):
         # Clear input
@@ -142,13 +148,13 @@ class MainPage(tk.Frame):
         Button(mode_frame, "Clear", command=self.clear_input).pack(side="left", padx=5)
 
         # Text box for typing prompts
-        self.text_input = TextArea(input_frame, height=6, width=40)
+        self.text_input = TextArea(input_frame, height=5, width=40)
         self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
 
 
         # Right side: where the AI shows off its work
-        output_frame = LabelFrame(middle_frame).widget
-        output_frame.pack(side="right", fill="both", expand=True, padx=5, pady=5)
+        output_frame = LabelFrame(middle_frame, height=5, width=35).widget
+        output_frame.pack(side="right", fill="both",expand=True, padx=5, pady=5)
         Label(output_frame, text="Model Output Section").pack(anchor="w", padx=5, pady=5)
         Label(output_frame, text="Output Display:").pack(anchor="w", padx=5, pady=5)
         self.output_display = TextArea(output_frame, height=10, width=40)
@@ -156,16 +162,15 @@ class MainPage(tk.Frame):
 
     def bottom_frame(self):
         bottom_frame = LabelFrame(self).widget
-        bottom_frame.pack(side="left", fill="both", expand=True)
+        bottom_frame.pack(fill="both", expand=True)
 
         # Left side: model info
         self.info_frame = Frame(bottom_frame).widget
         self.info_frame.pack(side="left", fill="both", expand=True, padx=5, pady=5)
 
         # Right side: educational content (static)
-        oop_frame = Frame(bottom_frame).widget
-        oop_frame.pack(side="right", fill="both", expand=True, padx=5, pady=5)
-        Label(oop_frame, text="OOP Concepts Explanation:\n• Multiple Inheritance\n• Encapsulation\n• Polymorphism and Method Overriding\n• Multiple Decorators").pack(anchor="w", padx=5, pady=5)
+        self.oop_frame = Frame(bottom_frame).widget
+        self.oop_frame.pack(side="right", fill="both", expand=True, padx=5, pady=5)
 
     def on_model_change(self, model_name):
         self.current_model = model_name
@@ -177,20 +182,29 @@ class MainPage(tk.Frame):
         self.update_bottom_frame(
             model_name=model_instance.name,
             category=model_instance.category,
-            description=model_instance.description
+            description=model_instance.description,
+            oop_concepts=model_instance.oop_concepts
         )
 
-    def update_bottom_frame(self, model_name, category, description):
+    def update_bottom_frame(self, model_name, category, description, oop_concepts):
         # Clear old info
         for widget in self.info_frame.winfo_children():
             widget.destroy()
 
+        for widget in self.oop_frame.winfo_children():
+            widget.destroy()
+
         # Add new model info
-        info_text = f"Selected Model Info:\n• Model Name: {model_name}\n• Category: {category}\n• Description: {description}"
-        Label(self.info_frame, text=info_text, justify="left").pack(anchor="w", padx=5, pady=5)
+        info_text = f"• Model Name: {model_name}\n• Category: {category}\n• Description: {description}"
+        oop_concepts_text = f"{'\n'.join(oop_concepts)}"
+
+        Label(self.info_frame, text="Selected Model Info:", justify="left", wraplength=450).pack(anchor="w")
+        Label(self.info_frame, text=info_text, justify="left", wraplength=300).pack(anchor="w", padx=5, pady=5)
+        Label(self.oop_frame, text="OOP Concepts Explanation:", justify="left", wraplength=450).pack(anchor="w")
+        Label(self.oop_frame, text=oop_concepts_text, justify="left", wraplength=450).pack(anchor="w", padx=5, pady=5)
 
     def set_output(self, content, content_type="text"):
-        """Update the output display based on content type"""
+        # Update the output display based on content type
         self.output_type = content_type
         self.output_display.widget.pack_forget()  # remove previous widget
         
@@ -210,8 +224,15 @@ class MainPage(tk.Frame):
             self.output_display.widget.pack(fill="both", expand=True, padx=5, pady=5)
 
     def run_model(self):
+        self.set_output("Running the model...", "text")
+        self.update_idletasks()
+        
         model_name = self.current_model
         model_instance = self.instantiated_models[model_name]
+
+        if not model_instance.is_loaded:
+            self.set_output("Please load the model first.", "text")
+            return
 
         # check if input type matches model input type
         if self.input_mode.get() != model_instance.input_type:
@@ -220,7 +241,7 @@ class MainPage(tk.Frame):
 
         input_content = self.text_input.get() if model_instance.input_type == "text" else getattr(self.text_input, "image_path", None)
         if not input_content:
-            self.set_output(f"Please provide valid input.", "text")
+            self.set_output("Please provide valid input.", "text")
             return
 
         output = model_instance.generate_response(input_content)
