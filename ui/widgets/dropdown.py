@@ -13,7 +13,7 @@ class DropdownMenu(BaseWidget):
             bg=kwargs.get("bg", theme.BG_COLOR),
             fg=kwargs.get("fg", theme.TEXT_COLOR),
             activeforeground=kwargs.get("activeforeground", theme.TEXT_COLOR),
-            highlightthickness=0            
+            highlightthickness=0,
         )
 
     def get(self):

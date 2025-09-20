@@ -10,4 +10,4 @@ class Button(BaseWidget):
         kwargs.setdefault("highlightbackground", theme.BG_COLOR)
         kwargs.setdefault("activebackground", theme.BUTTON_COLOR)
 
-        self.widget = tk.Button(parent, text=text, command=command, **kwargs)
+        self.widget = tk.Button(parent, text=text, relief="flat", command=command, **kwargs)
