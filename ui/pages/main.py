@@ -119,6 +119,8 @@ class MainPage(tk.Frame):
         ).pack(side="left", padx=5, pady=2)
 
         Button(top_frame, text="Load Model", command=self.load_model).pack(side="left", padx=5)
+        Button(top_frame, "Run Model", command=lambda: self.run_model()).pack(side="left", padx=5)
+        Button(top_frame, "Clear", command=self.clear_input).pack(side="left", padx=5)
 
         # Add some space above the horizontal line
         padding_frame = Frame(self, height=20).widget
@@ -144,8 +146,6 @@ class MainPage(tk.Frame):
         Radio(mode_frame, "Text", self.input_mode, "text").pack(side="left", padx=5)
         Radio(mode_frame, "Image", self.input_mode, "image").pack(side="left", padx=5)
         Button(mode_frame, "Browse", command=self.browse_file).pack(side="left", padx=5)
-        Button(mode_frame, "Run Model", command=lambda: self.run_model()).pack(side="left", padx=5)
-        Button(mode_frame, "Clear", command=self.clear_input).pack(side="left", padx=5)
 
         # Text box for typing prompts
         self.text_input = TextArea(input_frame, height=5, width=40)
