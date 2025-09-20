@@ -22,7 +22,7 @@ class BLIPCaptioner(BaseModel, TimerMixin):
     
     @TimerMixin.time_execution
     def load_model(self):
-        self.processor = AutoProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+        self.processor = AutoProcessor.from_pretrained("Salesforce/blip-image-captioning-base", use_fast=True)
         self.model = AutoModelForImageTextToText.from_pretrained("Salesforce/blip-image-captioning-base")
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)

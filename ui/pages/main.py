@@ -14,7 +14,7 @@ class MainPage(tk.Frame):
             key: value() for key, value in MODELS.items()
         }
         
-        # Build our UI from top to bottom - like stacking blocks!
+        # Build our UI from top to bottom
         self.top_frame()
         self.middle_frame()
         self.bottom_frame()
@@ -22,6 +22,11 @@ class MainPage(tk.Frame):
         # Set default model info
         self.current_model = list(MODELS.keys())[0]
         self.on_model_change(self.current_model)
+
+        # Load placeholder thumbnail icon
+        img_icon = Image.open("resources/images/placeholder-image.jpg")
+        img_icon.thumbnail((200, 200))  # small placeholder size
+        self.placeholder_icon = ImageTk.PhotoImage(img_icon)  # keep reference
 
     def on_submit(self):
         # Grab whatever the user typed and clean it up
@@ -31,14 +36,14 @@ class MainPage(tk.Frame):
         else:
             self.status.config(text="Please enter a name.")
 
-    def load_model(self):
-        # call load_model on the selected model instance
-        self.set_output("Loading model...", "text")
+    # call load_model on the selected model instance
+    def load_model(self, model=None):
+        model_name = model if model else self.current_model
+        self.set_output(f"Loading {model_name} model...", "text")
         self.update_idletasks()
-        model_name = self.current_model
         model_instance = self.instantiated_models[model_name]
         model_instance.load_model()
-        self.set_output(f"{model_name} Model has loaded successfully. You can now run the model.", "text")
+        self.set_output(f"{model_name} Model has been loaded successfully. You can now run the model.", "text")
 
 
     def clear_input(self):
@@ -47,11 +52,14 @@ class MainPage(tk.Frame):
             self.text_input.set("")
         elif hasattr(self.text_input, "widget"):
             # If it's an image Label, remove image and path
-            self.text_input.widget.config(image=None, text="")  
-            if hasattr(self.text_input, "image_ref"):
-                self.text_input.image_ref = None
-            if hasattr(self.text_input, "image_path"):
-                self.text_input.image_path = None
+            # Just reuse the already loaded placeholder
+            self.text_input.widget.config(
+                image=self.placeholder_icon,
+                text="",
+                compound="center"
+            )
+            self.text_input.image_ref = self.placeholder_icon
+            self.text_input.image_path = None
 
         # Clear output
         if hasattr(self.output_display, "set"):
@@ -69,13 +77,25 @@ class MainPage(tk.Frame):
         
         if mode == "text":
             # Replace with TextArea
-            self.text_input = TextArea(self.text_input.widget.master, height=6, width=40)
+            self.text_input = TextArea(self.text_input.widget.master, width=30, height=10)
             self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
         elif mode == "image":
-            # Replace with Label for image display
-            self.text_input = Label(self.text_input.widget.master, text="Image here", bg=theme.TEXTBOX_COLOR)
+            # Replace with Label showing the placeholder icon
+            self.text_input = Label(
+                self.text_input.widget.master,
+                text="",
+                bg=theme.TEXTBOX_COLOR,
+                width=30,
+                height=10
+            )
+            self.text_input.widget.config(
+                image=self.placeholder_icon,
+                text="",
+                compound="center"
+            )
             self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
-            self.text_input.image_ref = None  # Keep reference to avoid GC
+            self.text_input.image_ref = self.placeholder_icon  # keep reference
+            self.text_input.image_path = None
 
     def browse_file(self):
         if self.input_mode.get() == "text":
@@ -94,7 +114,7 @@ class MainPage(tk.Frame):
             if file_path:
                 # Load image
                 img = Image.open(file_path)
-                img.thumbnail((400, 400))  # resize to fit the box
+                img.thumbnail((200, 200))  # resize to fit the box
                 photo = ImageTk.PhotoImage(img)
                 self.text_input.widget.config(image=photo, text="")
                 self.text_input.image_ref = photo  # keep reference
@@ -116,11 +136,10 @@ class MainPage(tk.Frame):
             options=list(MODELS.keys()),
             default=list(MODELS.keys())[0],
             command=self.on_model_change
-        ).pack(side="left", padx=5, pady=2)
+        ).pack(side="left", padx=5)
 
         Button(top_frame, text="Load Model", command=self.load_model).pack(side="left", padx=5)
-        Button(top_frame, "Run Model", command=lambda: self.run_model()).pack(side="left", padx=5)
-        Button(top_frame, "Clear", command=self.clear_input).pack(side="left", padx=5)
+        Button(top_frame, "Clear", command=self.clear_input).pack(side="right", padx=5)
 
         # Add some space above the horizontal line
         padding_frame = Frame(self, height=20).widget
@@ -139,7 +158,7 @@ class MainPage(tk.Frame):
 
         # Radio buttons to choose between text or image input
         mode_frame = Frame(input_frame).widget
-        mode_frame.pack(fill="x", padx=5, pady=5)
+        mode_frame.pack(fill="x", padx=5)
 
         self.input_mode = tk.StringVar(value="text")  # Default to text mode
         self.input_mode.trace_add("write", lambda *args: self.update_input_display())
@@ -151,14 +170,13 @@ class MainPage(tk.Frame):
         self.text_input = TextArea(input_frame, height=5, width=40)
         self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
 
-
         # Right side: where the AI shows off its work
-        output_frame = LabelFrame(middle_frame, height=5, width=35).widget
+        output_frame = LabelFrame(middle_frame).widget
         output_frame.pack(side="right", fill="both",expand=True, padx=5, pady=5)
         Label(output_frame, text="Model Output Section").pack(anchor="w", padx=5, pady=5)
-        Label(output_frame, text="Output Display:").pack(anchor="w", padx=5, pady=5)
-        self.output_display = TextArea(output_frame, height=10, width=40)
-        self.output_display.pack(fill="both", expand=True, padx=5, pady=5)
+        Button(output_frame, "Run Model", command=lambda: self.run_model()).pack(anchor="w", padx=5)
+        self.output_display = TextArea(output_frame, height=5, width=40)
+        self.output_display.pack(pady=10, padx=5, fill="both", expand=True)
 
     def bottom_frame(self):
         bottom_frame = LabelFrame(self).widget
@@ -223,11 +241,11 @@ class MainPage(tk.Frame):
             self.output_display.image_ref = photo
             self.output_display.widget.pack(fill="both", expand=True, padx=5, pady=5)
 
-    def run_model(self):
+    def run_model(self, model=None):
         self.set_output("Running the model...", "text")
         self.update_idletasks()
         
-        model_name = self.current_model
+        model_name = model if model else self.current_model
         model_instance = self.instantiated_models[model_name]
 
         if not model_instance.is_loaded:
