@@ -4,7 +4,6 @@ from .button import Button
 from .label import Label
 from .textarea import TextArea
 from .radio import Radio
-from .entry import Entry
 from .frame import Frame
 from .label_frame import LabelFrame
 from .dropdown import DropdownMenu
@@ -15,7 +14,6 @@ __all__ = [
     "Label",
     "TextArea",
     "Radio",
-    "Entry",
     "Frame",
     "LabelFrame",
     "DropdownMenu",
