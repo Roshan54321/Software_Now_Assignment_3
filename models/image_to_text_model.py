@@ -1,5 +1,5 @@
 from transformers import AutoProcessor, AutoModelForImageTextToText
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import torch
 from .base_model import BaseModel
 from .mixins import TimerMixin
@@ -22,16 +22,36 @@ class BLIPCaptioner(BaseModel, TimerMixin):
     
     @TimerMixin.time_execution
     def load_model(self):
-        self.processor = AutoProcessor.from_pretrained("Salesforce/blip-image-captioning-base", use_fast=True)
-        self.model = AutoModelForImageTextToText.from_pretrained("Salesforce/blip-image-captioning-base")
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model.to(self.device)
-        self._is_loaded = True
+        try:
+            self.processor = AutoProcessor.from_pretrained("Salesforce/blip-image-captioning-base", use_fast=True)
+            self.model = AutoModelForImageTextToText.from_pretrained("Salesforce/blip-image-captioning-base")
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            self.model.to(self.device)
+            self._is_loaded = True
+        except Exception as e:
+            self._is_loaded = False
+            print(f"[ERROR] Failed to load model: {e}")
+            raise RuntimeError(f"Model loading failed: {e}")
 
     @TimerMixin.time_execution
     def generate_response(self, image_path):
-        image = Image.open(image_path).convert("RGB")
-        inputs = self.processor(images=image, return_tensors="pt").to(self.device)
-        output = self.model.generate(**inputs)
-        caption = self.processor.decode(output[0], skip_special_tokens=True)
-        return caption
+        try:
+            image = Image.open(image_path).convert("RGB")
+        except FileNotFoundError:
+            print(f"[ERROR] Image file not found: {image_path}")
+            return "Error: Image file not found."
+        except UnidentifiedImageError:
+            print(f"[ERROR] File is not a valid image: {image_path}")
+            return "Error: File is not a valid image."
+        except Exception as e:
+            print(f"[ERROR] Unexpected error opening image: {e}")
+            return f"Error: Unable to open image. {e}"
+        
+        try:
+            inputs = self.processor(images=image, return_tensors="pt").to(self.device)
+            output = self.model.generate(**inputs)
+            caption = self.processor.decode(output[0], skip_special_tokens=True)
+            return caption
+        except Exception as e:
+            print(f"[ERROR] Failed to generate caption: {e}")
+            return f"Error: Failed to generate caption. {e}"
