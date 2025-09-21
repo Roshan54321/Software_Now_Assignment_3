@@ -214,7 +214,7 @@ class MainPage(tk.Frame):
 
         # Add new model info
         info_text = f"• Model Name: {model_name}\n• Category: {category}\n• Description: {description}"
-        oop_concepts_text = '\n'.join(oop_concepts)
+        oop_concepts_text = f"{'\n'.join(oop_concepts)}"
 
         Label(self.info_frame, text="Selected Model Info:", justify="left", wraplength=450).pack(anchor="w")
         Label(self.info_frame, text=info_text, justify="left", wraplength=300).pack(anchor="w", padx=5, pady=5)
