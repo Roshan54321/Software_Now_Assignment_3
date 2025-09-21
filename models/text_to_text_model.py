@@ -21,20 +21,29 @@ class TextGenModel(BaseModel, TimerMixin):
 
     @TimerMixin.time_execution
     def load_model(self):
-        self.tokenizer = AutoTokenizer.from_pretrained("openai-community/gpt2")
-        self.model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
-        if torch.cuda.is_available():
-            self.device = "cuda"
-        elif torch.backends.mps.is_available():
-            self.device = "mps"
-        else:
-            self.device = "cpu"
-        self.model.to(self.device)
-        self._is_loaded = True
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained("openai-community/gpt2")
+            self.model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
+            if torch.cuda.is_available():
+                self.device = "cuda"
+            elif torch.backends.mps.is_available():
+                self.device = "mps"
+            else:
+                self.device = "cpu"
+            self.model.to(self.device)
+            self._is_loaded = True
+        except Exception as e:
+            self._is_loaded = False
+            print(f"[ERROR] Failed to load text generation model: {e}")
+            raise RuntimeError(f"Model loading failed: {e}")
 
     @TimerMixin.time_execution
     def generate_response(self, prompt, max_tokens=50):
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(**inputs, max_new_tokens=max_tokens)
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return response
+        try:
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            outputs = self.model.generate(**inputs, max_new_tokens=max_tokens)
+            response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            return response
+        except Exception as e:
+            print(f"[ERROR] Failed to generate text: {e}")
+            return f"Error: Failed to generate text. {e}"
