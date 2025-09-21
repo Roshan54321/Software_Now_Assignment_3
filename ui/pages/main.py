@@ -97,6 +97,11 @@ class MainPage(tk.Frame):
             self.text_input.image_ref = self.placeholder_icon  # keep reference
             self.text_input.image_path = None
 
+    def handle_error(self, error_message):
+        """error message"""
+        self.set_output(f"Error: {error_message}", "text")
+        print(f"[EXCEPTION] {error_message}")
+
     def browse_file(self):
         if self.input_mode.get() == "text":
             filetypes = (("Text files", "*.txt"), ("All files", "*.*"))
@@ -112,13 +117,15 @@ class MainPage(tk.Frame):
             filetypes = (("Image files", "*.png *.jpg *.jpeg"), ("All files", "*.*"))
             file_path = filedialog.askopenfilename(title="Select Image File", filetypes=filetypes)
             if file_path:
-                # Load image
-                img = Image.open(file_path)
-                img.thumbnail((200, 200))  # resize to fit the box
-                photo = ImageTk.PhotoImage(img)
-                self.text_input.widget.config(image=photo, text="")
-                self.text_input.image_ref = photo  # keep reference
-                self.text_input.image_path = file_path  # keep image path
+                try:
+                    img = Image.open(file_path)
+                    img.thumbnail((200, 200))  # resize to fit the box
+                    photo = ImageTk.PhotoImage(img)
+                    self.text_input.widget.config(image=photo, text="")
+                    self.text_input.image_ref = photo  # keep reference
+                    self.text_input.image_path = file_path  # keep image path
+                except Exception as e:
+                    self.handle_error(f"Error loading image: {e}")
 
     def top_frame(self):
         # leave some space at the top
@@ -262,8 +269,8 @@ class MainPage(tk.Frame):
             self.set_output("Please provide valid input.", "text")
             return
 
-        output = model_instance.generate_response(input_content)
-
-        self.set_output(output, model_instance.output_type)
-
-
+        try:
+            output = model_instance.generate_response(input_content)
+            self.set_output(output, model_instance.output_type)
+        except Exception as e:
+            self.handle_error(f"Error running model: {e}")
