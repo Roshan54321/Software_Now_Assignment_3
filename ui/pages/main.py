@@ -265,3 +265,5 @@ class MainPage(tk.Frame):
         output = model_instance.generate_response(input_content)
 
         self.set_output(output, model_instance.output_type)
+
+
