@@ -4,7 +4,7 @@ import torch
 from .base_model import BaseModel
 from .mixins import TimerMixin
 
-class BLIPCaptioner(BaseModel, TimerMixin):
+class BLIPCaptioner(BaseModel, TimerMixin):  # Inheritance: inherits from BaseModel and TimerMixin (Multiple Inheritance)
     def __init__(self):
         super().__init__(
             name="BLIP Image Captioning Model",
@@ -16,16 +16,27 @@ class BLIPCaptioner(BaseModel, TimerMixin):
                 "Encapsulation – hides image preprocessing and decoding behind generate_response",
                 "Polymorphism – same generate_response interface as other models, behaves differently for images",
                 "Inheritance – uses a common base structure for AI models",
-                "Multiple Inheritance – combines base class and metadata mixins without code duplication"
+                "Multiple Inheritance – combines base class and metadata mixins without code duplication",
+                "Abstraction – exposes only high-level API to GUI, hides inner workings",
+                "Method Overriding – load_model overrides BaseModel to customize loading",
+                "Decorators – uses @property and custom decorators for clean design and structure"
             ]
         )
-    
-    @TimerMixin.time_execution
-    def load_model(self):
+        self._is_loaded = False
+        self._device = None
+
+    @property  # Decorators: device is a property
+    def device(self):
+        # Abstraction: hides device selection logic from external callers
+        if self._device is None:
+            self._device = "cuda" if torch.cuda.is_available() else "cpu"
+        return self._device
+
+    @TimerMixin.time_execution  # Decorators: custom timing decorator
+    def load_model(self):  # Method Overriding: overrides BaseModel.load_model
         try:
             self.processor = AutoProcessor.from_pretrained("Salesforce/blip-image-captioning-base", use_fast=True)
             self.model = AutoModelForImageTextToText.from_pretrained("Salesforce/blip-image-captioning-base")
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.model.to(self.device)
             self._is_loaded = True
         except Exception as e:
@@ -33,8 +44,10 @@ class BLIPCaptioner(BaseModel, TimerMixin):
             print(f"[ERROR] Failed to load model: {e}")
             raise RuntimeError(f"Model loading failed: {e}")
 
-    @TimerMixin.time_execution
+    @TimerMixin.time_execution  # Decorators: custom timing decorator
     def generate_response(self, image_path):
+        # Encapsulation: wraps image loading, preprocessing, inference, and decoding
+        # Polymorphism: same API as other models, implementation is image-specific
         try:
             image = Image.open(image_path).convert("RGB")
         except FileNotFoundError:
