@@ -18,7 +18,7 @@ class Button(BaseWidget):
         
 
     def on_enter(self, event):
-        self.widget['background'] = "#808080"  # or any color you like for hover
+        self.widget['background'] = "#808080"
         
 
     def on_leave(self, event):
