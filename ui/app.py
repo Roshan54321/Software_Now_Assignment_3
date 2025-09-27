@@ -9,7 +9,7 @@ class App:
         # Create our main window
         self.root = tk.Tk()
         self.root.title("AI Models Simulation")
-        self.root.geometry("800x600")
+        self.root.geometry("800x800")
 
         # Load up our main page
         self.main_window = MainPage(self.root)
