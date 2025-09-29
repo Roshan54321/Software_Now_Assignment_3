@@ -12,7 +12,7 @@ class App:
         self.root.geometry("800x800")
         
         # Set minimum window size to prevent layout issues
-        self.root.minsize(600, 600)
+        self.root.minsize(1024, 768)
         
         # Configure window closing behavior
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
