@@ -32,11 +32,11 @@ class App:
         self.center_window()
 
     def run(self):
-        """Start the application main loop"""
+        # Start the application main loop
         self.root.mainloop()
     
     def center_window(self):
-        """Center the window on the screen"""
+        # Center the window on the screen
         try:
             self.root.update_idletasks()
             
@@ -58,7 +58,7 @@ class App:
             print(f"Could not center window: {e}")
     
     def on_closing(self):
-        """Handle window closing with confirmation"""
+        # Handle window closing with confirmation
         try:
             # Check if any models are currently loaded
             loaded_models = [
@@ -73,28 +73,15 @@ class App:
                     "Are you sure you want to exit?"
                 )
                 if response:
-                    self.cleanup_and_exit()
+                    self.root.destroy()
             else:
-                self.cleanup_and_exit()
+                self.root.destroy()
         except Exception as e:
             print(f"Error during closing: {e}")
             self.root.destroy()
     
-    def cleanup_and_exit(self):
-        """Clean up resources before exiting"""
-        try:
-            # Unload all models to free memory
-            for model in self.main_window.instantiated_models.values():
-                if hasattr(model, 'is_loaded') and model.is_loaded:
-                    if hasattr(model, 'unload_model'):
-                        model.unload_model()
-        except Exception as e:
-            print(f"Error during cleanup: {e}")
-        finally:
-            self.root.destroy()
-    
     def add_menubar(self):
-        """Create and configure the menu bar"""
+        # Create and configure the menu bar
         # File menu
         file_menu = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="File", menu=file_menu)
@@ -144,7 +131,7 @@ class App:
         help_menu.add_command(label="Model Info", command=self.show_model_info)
 
     def clear_all(self):
-        """Clear all input and output fields"""
+        # Clear all input and output fields
         try:
             response = messagebox.askyesno(
                 "Clear All",
@@ -156,7 +143,7 @@ class App:
             messagebox.showerror("Error", f"Could not clear fields: {str(e)}")
 
     def load_all_models(self):
-        """Load all available models"""
+        # Load all available models
         try:
             response = messagebox.askyesno(
                 "Load All Models",
@@ -190,7 +177,7 @@ class App:
             messagebox.showerror("Error", f"Could not load models: {str(e)}")
 
     def show_model_info(self):
-        """Display information about available models"""
+        # Display information about available models
         try:
             model_list = []
             for name, model_class in MODELS.items():
@@ -210,7 +197,7 @@ class App:
             messagebox.showerror("Error", f"Could not retrieve model info: {str(e)}")
 
     def show_about(self):
-        """Display application information"""
+        # Display application information
         messagebox.showinfo(
             "About This Application",
             "AI Models Simulation\n"
