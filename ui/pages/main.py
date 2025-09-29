@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from ui.widgets import Button, Label, TextArea, Radio, Frame, LabelFrame, DropdownMenu
 from ui import theme
 from PIL import Image, ImageTk
@@ -14,6 +14,15 @@ class MainPage(tk.Frame):
             key: value() for key, value in MODELS.items()
         }
         
+        # Initialize placeholder icon first
+        try:
+            img_icon = Image.open("resources/images/placeholder-image.jpg")
+            img_icon.thumbnail((200, 200))
+            self.placeholder_icon = ImageTk.PhotoImage(img_icon)
+        except Exception as e:
+            print(f"Warning: Could not load placeholder image: {e}")
+            self.placeholder_icon = None
+        
         # Build our UI from top to bottom
         self.top_frame()
         self.middle_frame()
@@ -22,11 +31,6 @@ class MainPage(tk.Frame):
         # Set default model info
         self.current_model = list(MODELS.keys())[0]
         self.on_model_change(self.current_model)
-
-        # Load placeholder thumbnail icon
-        img_icon = Image.open("resources/images/placeholder-image.jpg")
-        img_icon.thumbnail((200, 200))  # small placeholder size
-        self.placeholder_icon = ImageTk.PhotoImage(img_icon)  # keep reference
 
     def on_submit(self):
         # Grab whatever the user typed and clean it up
@@ -39,93 +43,108 @@ class MainPage(tk.Frame):
     # call load_model on the selected model instance
     def load_model(self, model=None):
         model_name = model if model else self.current_model
-        self.set_output(f"Loading {model_name} model...", "text")
-        self.update_idletasks()
-        model_instance = self.instantiated_models[model_name]
-        model_instance.load_model()
-        self.set_output(f"{model_name} Model has been loaded successfully. You can now run the model.", "text")
-
+        try:
+            self.set_output(f"Loading {model_name} model...", "text")
+            self.update_idletasks()
+            model_instance = self.instantiated_models[model_name]
+            model_instance.load_model()
+            self.set_output(f"{model_name} Model has been loaded successfully. You can now run the model.", "text")
+        except Exception as e:
+            error_msg = f"Error loading model: {str(e)}"
+            self.set_output(error_msg, "text")
+            messagebox.showerror("Model Loading Error", error_msg)
 
     def clear_input(self):
-        # Clear input
-        if hasattr(self.text_input, "set"):
-            self.text_input.set("")
-        elif hasattr(self.text_input, "widget"):
-            # If it's an image Label, remove image and path
-            # Just reuse the already loaded placeholder
-            self.text_input.widget.config(
-                image=self.placeholder_icon,
-                text="",
-                compound="center"
-            )
-            self.text_input.image_ref = self.placeholder_icon
-            self.text_input.image_path = None
+        try:
+            # Clear input
+            if hasattr(self.text_input, "set"):
+                self.text_input.set("")
+            elif hasattr(self.text_input, "widget") and self.placeholder_icon:
+                # If it's an image Label, remove image and path
+                self.text_input.widget.config(
+                    image=self.placeholder_icon,
+                    text="",
+                    compound="center"
+                )
+                self.text_input.image_ref = self.placeholder_icon
+                self.text_input.image_path = None
 
-        # Clear output
-        if hasattr(self.output_display, "set"):
-            self.output_display.set("")
-        elif hasattr(self.output_display, "widget"):
-            self.output_display.widget.config(image=None, text="")
-            if hasattr(self.output_display, "image_ref"):
-                self.output_display.image_ref = None
+            # Clear output
+            if hasattr(self.output_display, "set"):
+                self.output_display.set("")
+            elif hasattr(self.output_display, "widget"):
+                self.output_display.widget.config(image="", text="")
+                if hasattr(self.output_display, "image_ref"):
+                    self.output_display.image_ref = None
+        except Exception as e:
+            print(f"Error clearing input: {e}")
     
     def update_input_display(self):
-        # Switch input display between text and image based on radio button
-        mode = self.input_mode.get()
-        # Remove current widget
-        self.text_input.widget.pack_forget()
-        
-        if mode == "text":
-            # Replace with TextArea
-            self.text_input = TextArea(self.text_input.widget.master, width=30, height=10)
-            self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
-        elif mode == "image":
-            # Replace with Label showing the placeholder icon
-            self.text_input = Label(
-                self.text_input.widget.master,
-                text="",
-                bg=theme.TEXTBOX_COLOR,
-                width=30,
-                height=10
-            )
-            self.text_input.widget.config(
-                image=self.placeholder_icon,
-                text="",
-                compound="center"
-            )
-            self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
-            self.text_input.image_ref = self.placeholder_icon  # keep reference
-            self.text_input.image_path = None
-
-    def handle_error(self, error_message):
-        """error message"""
-        self.set_output(f"Error: {error_message}", "text")
-        print(f"[EXCEPTION] {error_message}")
+        try:
+            # Switch input display between text and image based on radio button
+            mode = self.input_mode.get()
+            # Get parent before destroying
+            parent = self.text_input.widget.master
+            # Remove current widget
+            self.text_input.widget.pack_forget()
+            
+            if mode == "text":
+                # Replace with TextArea
+                self.text_input = TextArea(parent, width=30, height=10)
+                self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
+            elif mode == "image":
+                # Replace with Label showing the placeholder icon
+                self.text_input = Label(
+                    parent,
+                    text="Click 'Browse' to load an image" if not self.placeholder_icon else "",
+                    bg=theme.TEXTBOX_COLOR,
+                    width=30,
+                    height=10
+                )
+                if self.placeholder_icon:
+                    self.text_input.widget.config(
+                        image=self.placeholder_icon,
+                        text="",
+                        compound="center"
+                    )
+                    self.text_input.image_ref = self.placeholder_icon
+                self.text_input.pack(pady=10, padx=5, fill="both", expand=True)
+                self.text_input.image_path = None
+        except Exception as e:
+            print(f"Error updating input display: {e}")
+            messagebox.showerror("Display Error", f"Could not update input display: {str(e)}")
 
     def browse_file(self):
-        if self.input_mode.get() == "text":
-            filetypes = (("Text files", "*.txt"), ("All files", "*.*"))
-            file_path = filedialog.askopenfilename(title="Select Text File", filetypes=filetypes)
-            if file_path:
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                    self.text_input.set(content)
-                except Exception as e:
-                    self.text_input.set(f"Error reading file: {e}")
-        elif self.input_mode.get() == "image":
-            filetypes = (("Image files", "*.png *.jpg *.jpeg"), ("All files", "*.*"))
-            file_path = filedialog.askopenfilename(title="Select Image File", filetypes=filetypes)
-            if file_path:
-                try:
-                    img = Image.open(file_path)
-                    img.thumbnail((200, 200))  # resize to fit the box
-                    photo = ImageTk.PhotoImage(img)
-                    self.text_input.widget.config(image=photo, text="")
-                    self.text_input.image_ref = photo  # keep reference
-                    self.text_input.image_path = file_path  # keep image path
-                except Exception as e:
-                    self.handle_error(f"Error loading image: {e}")
+        try:
+            if self.input_mode.get() == "text":
+                filetypes = (("Text files", "*.txt"), ("All files", "*.*"))
+                file_path = filedialog.askopenfilename(title="Select Text File", filetypes=filetypes)
+                if file_path:
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            content = f.read()
+                        self.text_input.set(content)
+                    except Exception as e:
+                        error_msg = f"Error reading file: {e}"
+                        self.text_input.set(error_msg)
+                        messagebox.showerror("File Read Error", error_msg)
+            elif self.input_mode.get() == "image":
+                filetypes = (("Image files", "*.png *.jpg *.jpeg *.gif *.bmp"), ("All files", "*.*"))
+                file_path = filedialog.askopenfilename(title="Select Image File", filetypes=filetypes)
+                if file_path:
+                    try:
+                        # Load image
+                        img = Image.open(file_path)
+                        img.thumbnail((200, 200))
+                        photo = ImageTk.PhotoImage(img)
+                        self.text_input.widget.config(image=photo, text="")
+                        self.text_input.image_ref = photo
+                        self.text_input.image_path = file_path
+                    except Exception as e:
+                        error_msg = f"Error loading image: {e}"
+                        messagebox.showerror("Image Load Error", error_msg)
+        except Exception as e:
+            messagebox.showerror("Browse Error", f"An error occurred: {str(e)}")
 
     def top_frame(self):
         # leave some space at the top
@@ -212,65 +231,79 @@ class MainPage(tk.Frame):
         )
 
     def update_bottom_frame(self, model_name, category, description, oop_concepts):
-        # Clear old info
-        for widget in self.info_frame.winfo_children():
-            widget.destroy()
+        try:
+            # Clear old info
+            for widget in self.info_frame.winfo_children():
+                widget.destroy()
 
-        for widget in self.oop_frame.winfo_children():
-            widget.destroy()
+            for widget in self.oop_frame.winfo_children():
+                widget.destroy()
 
-        # Add new model info
-        info_text = f"• Model Name: {model_name}\n• Category: {category}\n• Description: {description}"
-        oop_concepts_text = f"{'\n'.join(oop_concepts)}"
+            # Add new model info
+            info_text = f"• Model Name: {model_name}\n• Category: {category}\n• Description: {description}"
+            oop_concepts_text = '\n'.join(oop_concepts)
 
-        Label(self.info_frame, text="Selected Model Info:", justify="left", wraplength=450).pack(anchor="w")
-        Label(self.info_frame, text=info_text, justify="left", wraplength=300).pack(anchor="w", padx=5, pady=5)
-        Label(self.oop_frame, text="OOP Concepts Explanation:", justify="left", wraplength=450).pack(anchor="w")
-        Label(self.oop_frame, text=oop_concepts_text, justify="left", wraplength=450).pack(anchor="w", padx=5, pady=5)
+            Label(self.info_frame, text="Selected Model Info:", justify="left", wraplength=450).pack(anchor="w")
+            Label(self.info_frame, text=info_text, justify="left", wraplength=300).pack(anchor="w", padx=5, pady=5)
+            Label(self.oop_frame, text="OOP Concepts Explanation:", justify="left", wraplength=450).pack(anchor="w")
+            Label(self.oop_frame, text=oop_concepts_text, justify="left", wraplength=450).pack(anchor="w", padx=5, pady=5)
+        except Exception as e:
+            print(f"Error updating bottom frame: {e}")
 
     def set_output(self, content, content_type="text"):
-        # Update the output display based on content type
-        self.output_type = content_type
-        self.output_display.widget.pack_forget()  # remove previous widget
-        
-        if content_type == "text":
-            # Show TextArea
-            self.output_display = TextArea(self.output_display.widget.master, height=10, width=40)
-            self.output_display.set(content)
+        try:
+            # Update the output display based on content type
+            self.output_type = content_type
+            parent = self.output_display.widget.master
+            self.output_display.widget.pack_forget()  # remove previous widget
+            
+            if content_type == "text":
+                # Show TextArea
+                self.output_display = TextArea(parent, height=10, width=40)
+                self.output_display.set(content)
+                self.output_display.pack(fill="both", expand=True, padx=5, pady=5)
+            elif content_type == "image":
+                # Show image
+                self.output_display = Label(parent, bg=theme.TEXTBOX_COLOR)
+                img = Image.open(content)
+                img.thumbnail((400, 400))
+                photo = ImageTk.PhotoImage(img)
+                self.output_display.widget.config(image=photo)
+                self.output_display.image_ref = photo
+                self.output_display.widget.pack(fill="both", expand=True, padx=5, pady=5)
+        except Exception as e:
+            print(f"Error setting output: {e}")
+            # Fallback to text display
+            self.output_display = TextArea(parent, height=10, width=40)
+            self.output_display.set(f"Error displaying output: {str(e)}")
             self.output_display.pack(fill="both", expand=True, padx=5, pady=5)
-        elif content_type == "image":
-            # Show image
-            self.output_display = Label(self.output_display.widget.master, bg=theme.TEXTBOX_COLOR)
-            img = Image.open(content)
-            img.thumbnail((400, 400))
-            photo = ImageTk.PhotoImage(img)
-            self.output_display.widget.config(image=photo)
-            self.output_display.image_ref = photo
-            self.output_display.widget.pack(fill="both", expand=True, padx=5, pady=5)
 
     def run_model(self, model=None):
-        self.set_output("Running the model...", "text")
-        self.update_idletasks()
-        
-        model_name = model if model else self.current_model
-        model_instance = self.instantiated_models[model_name]
-
-        if not model_instance.is_loaded:
-            self.set_output("Please load the model first.", "text")
-            return
-
-        # check if input type matches model input type
-        if self.input_mode.get() != model_instance.input_type:
-            self.set_output(f"Please provide {model_instance.input_type} input for this model.", "text")
-            return
-
-        input_content = self.text_input.get() if model_instance.input_type == "text" else getattr(self.text_input, "image_path", None)
-        if not input_content:
-            self.set_output("Please provide valid input.", "text")
-            return
-
         try:
+            self.set_output("Running the model...", "text")
+            self.update_idletasks()
+            
+            model_name = model if model else self.current_model
+            model_instance = self.instantiated_models[model_name]
+
+            if not model_instance.is_loaded:
+                self.set_output("Please load the model first.", "text")
+                return
+
+            # check if input type matches model input type
+            if self.input_mode.get() != model_instance.input_type:
+                self.set_output(f"Please provide {model_instance.input_type} input for this model.", "text")
+                return
+
+            input_content = self.text_input.get() if model_instance.input_type == "text" else getattr(self.text_input, "image_path", None)
+            if not input_content:
+                self.set_output("Please provide valid input.", "text")
+                return
+
             output = model_instance.generate_response(input_content)
+
             self.set_output(output, model_instance.output_type)
         except Exception as e:
-            self.handle_error(f"Error running model: {e}")
+            error_msg = f"Error running model: {str(e)}"
+            self.set_output(error_msg, "text")
+            messagebox.showerror("Model Execution Error", error_msg)
